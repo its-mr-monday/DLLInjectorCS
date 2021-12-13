@@ -1,0 +1,8 @@
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\bin\Debug\DLLInjectorCS.exe.config
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\bin\Debug\DLLInjectorCS.exe
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\bin\Debug\DLLInjectorCS.pdb
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\obj\Debug\DLLInjectorCS.csproj.AssemblyReference.cache
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\obj\Debug\DLLInjectorCS.csproj.SuggestedBindingRedirects.cache
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\obj\Debug\DLLInjectorCS.csproj.CoreCompileInputs.cache
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\obj\Debug\DLLInjectorCS.exe
+C:\Users\VA\source\repos\WokS\DLLInjectorCS\obj\Debug\DLLInjectorCS.pdb
