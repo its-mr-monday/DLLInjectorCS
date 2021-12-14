@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DLLInjectorCS
 {
-    internal class Program
+    internal class DLLInjector
     {
         [Flags]
         private enum SnapshotFlags : uint
@@ -111,12 +111,24 @@ namespace DLLInjectorCS
             }
             
         }
+        static byte[] ReadDLLBytes(string DLL_Path)
+        {
+            if (File.Exists(DLL_Path))
+            {
+                byte[] fileBytes = File.ReadAllBytes(DLL_Path);
+                return fileBytes;
+            } else
+            {
+                return null;
+            }
+        }
         //Inject DLL to target process
         static bool InjectDLL(int pid, string DLL_Path)
         {
             long dll_size = DLL_Path.Length + 1;
             int? hlProc = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
 
+            byte[] dll = ReadDLLBytes(DLL_Path);
             if (hlProc == null)
             {
                 Console.Write("[!]Fail to open target process!\n");
@@ -125,7 +137,7 @@ namespace DLLInjectorCS
             IntPtr hProc = new IntPtr(hlProc.Value);
             Console.Write("[+]Opening Target Process...\n");
 
-            IntPtr MyAlloc = VirtualAllocEx(hProc, null, Convert.ToUInt32(dll_size), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            IntPtr MyAlloc = VirtualAllocEx(hProc, null, Convert.ToUInt32(dll.Length), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             
             if (MyAlloc == null)
             {
@@ -135,7 +147,7 @@ namespace DLLInjectorCS
 
             Console.Write("[+]Allocating memory in Target Process.\n");
 
-            bool IsWriteOk = WriteProcessMemory((int)hProc, (int)MyAlloc, Encoding.UTF8.GetBytes(DLL_Path), (int) dll_size, 0);
+            bool IsWriteOk = WriteProcessMemory((int)hProc, (int)MyAlloc, dll, (int) dll_size, 0);
 
             IntPtr dWord;
             IntPtr addrLoadLibrary = GetProcAddress(LoadLibrary("kernel32"), "LoadLibraryA");
