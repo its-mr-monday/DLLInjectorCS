@@ -41,15 +41,23 @@ namespace DLLInjectorCS
             internal string szExeFile;
         }
 
-        [DllImport("kernel32.dll")]
-        public static extern int OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
-
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr OpenProcess(
+                 uint processAccess,
+                 bool bInheritHandle,
+                 int processId
+            );
         [DllImport("kernel32.dll")]
         public static extern bool ReadProcessMemory(int hProcess, int lpBaseAddress, byte[] buffer, int size, int lpNumberOfBytesRead);
 
         [DllImport("kernel32.dll")]
-        public static extern bool WriteProcessMemory(int hProcess, int lpBaseAddress, byte[] buffer, int size, int lpNumberOfBytesWritten);
-
+        static extern bool WriteProcessMemory(
+             IntPtr hProcess,
+             IntPtr lpBaseAddress,
+             byte[] lpBuffer,
+             Int32 nSize,
+             out IntPtr lpNumberOfBytesWritten
+        );
         static uint DELETE = 0x00010000;
         static uint READ_CONTROL = 0x00020000;
         static uint WRITE_DAC = 0x00040000;
@@ -73,7 +81,7 @@ namespace DLLInjectorCS
 
 
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr? lpAddress,
+        static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress,
         uint dwSize, uint flAllocationType, uint flProtect);
 
         static uint PAGE_EXECUTE_READWRITE = 0x40;
@@ -81,7 +89,7 @@ namespace DLLInjectorCS
 
         [DllImport("kernel32.dll")]
         static extern IntPtr CreateRemoteThread(IntPtr hProcess,
-           IntPtr? lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress,
+           IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress,
            IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
 
         [DllImport("kernel32.dll")]
@@ -94,6 +102,9 @@ namespace DLLInjectorCS
         public static extern bool FreeLibrary(IntPtr hModule);
 
         public const UInt32 INVALID_HANDLE_VALUE = 0xffffffff;
+
+        //C++ NULL is equal to IntPtr.Zero in C#
+        public static IntPtr NULL = IntPtr.Zero;
 
         //Get ProcID by its name
         static int getProcID(string p_name)
@@ -126,38 +137,44 @@ namespace DLLInjectorCS
         static bool InjectDLL(int pid, string DLL_Path)
         {
             long dll_size = DLL_Path.Length + 1;
-            int? hlProc = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
+            IntPtr hProc = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
 
             byte[] dll = ReadDLLBytes(DLL_Path);
-            if (hlProc == null)
+            if (hProc == NULL)
             {
                 Console.Write("[!]Fail to open target process!\n");
                 return false;
             }
-            IntPtr hProc = new IntPtr(hlProc.Value);
+            //IntPtr hProc = new IntPtr(hlProc.Value);
             Console.Write("[+]Opening Target Process...\n");
 
-            IntPtr MyAlloc = VirtualAllocEx(hProc, null, Convert.ToUInt32(dll.Length), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+            IntPtr MyAlloc = VirtualAllocEx(hProc, NULL, Convert.ToUInt32(dll.Length), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
             
-            if (MyAlloc == null)
+            if (MyAlloc == NULL)
             {
                 Console.Write("[!]Fail to allocate memory in Target Process.\n");
                 return false;
             }
 
             Console.Write("[+]Allocating memory in Target Process.\n");
-
-            bool IsWriteOk = WriteProcessMemory((int)hProc, (int)MyAlloc, dll, dll.Length, 0);
+            IntPtr outSz;
+            bool IsWriteOk = WriteProcessMemory(hProc, MyAlloc, dll, dll.Length, out outSz);
+            if (outSz == NULL)
+            {
+                Console.Write("[!]Fail to write in Target Process memory.\n");
+                return false;
+            }
+            Console.Write("[+]Creating Remote Thread in Target Process\n");
 
             IntPtr dWord;
             IntPtr addrLoadLibrary = GetProcAddress(LoadLibrary("kernel32"), "LoadLibraryA");
-            IntPtr? ThreadReturn = CreateRemoteThread(hProc, null, 0, addrLoadLibrary, MyAlloc, 0, out dWord);
-            if (ThreadReturn == null)
+            IntPtr ThreadReturn = CreateRemoteThread(hProc, NULL, 0, addrLoadLibrary, MyAlloc, 0, out dWord);
+            if (ThreadReturn == NULL)
             {
                 Console.Write("[!]Fail to create Remote Thread\n");
                 return false;
             }
-            if ((hProc != null) && (MyAlloc != null) && (IsWriteOk != false) && (ThreadReturn != null))
+            if ((hProc != NULL) && (MyAlloc != NULL) && (IsWriteOk != false) && (ThreadReturn != NULL))
             {
                 Console.Write("[+]DLL Successfully Injected :)\n");
                 return true;
