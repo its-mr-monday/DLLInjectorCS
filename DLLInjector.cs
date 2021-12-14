@@ -155,7 +155,7 @@ namespace DLLInjectorCS
 
         static void usage()
         {
-            Console.Write("Usage: DLL_Injector.exe <Process name | Process ID> <DLL Path to Inject>\n");
+            Console.Write("Usage: DLLInjectorCS.exe <Process name | Process ID> <DLL Path to Inject>\n");
         }
 
         static void Main(string[] args)
