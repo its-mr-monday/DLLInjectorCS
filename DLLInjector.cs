@@ -147,7 +147,7 @@ namespace DLLInjectorCS
 
             Console.Write("[+]Allocating memory in Target Process.\n");
 
-            bool IsWriteOk = WriteProcessMemory((int)hProc, (int)MyAlloc, dll, (int) dll_size, 0);
+            bool IsWriteOk = WriteProcessMemory((int)hProc, (int)MyAlloc, dll, dll.Length, 0);
 
             IntPtr dWord;
             IntPtr addrLoadLibrary = GetProcAddress(LoadLibrary("kernel32"), "LoadLibraryA");
